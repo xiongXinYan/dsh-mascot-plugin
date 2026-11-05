@@ -1,7 +1,7 @@
 {
   "name": "dsh-mascot-plugin",
   "version": "0.3.0",
-  "description": "给 DeepSeek Harness Web 界面养一只中华五黑犬：会跟着你、一直循环做小动作",
+  "description": "给 DeepSeek Harness Web 界面养一只中华五黑犬：九帧逐帧动画，会眨眼、打哈欠、下犬式、wink、跳、打盹",
   "type": "module",
   "main": "./lib/index.js",
   "exports": {

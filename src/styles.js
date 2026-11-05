@@ -76,8 +76,8 @@ export const MASCOT_CSS = `
 
 .dsh-mascot__body {
   display: block;
-  width: 200px;
-  height: 169px;
+  width: 216px;
+  height: 213px;
   padding: 0;
   border: 0;
   background: none;
@@ -101,11 +101,11 @@ export const MASCOT_CSS = `
 }
 
 /* ---------------- 立绘 ---------------- */
-/* 620×525 的透明底位绘，容器按原比例给，拉伸会把狗压扁 */
+/* 440×433 的统一裁切框，九帧共用。容器按原比例给，拉伸会把狗压扁 */
 .dsh-mascot__art {
   position: relative;
-  width: 200px;
-  height: 169px;
+  width: 216px;
+  height: 213px;
   transform:
     translate(
       calc(var(--gaze-x, 0) * 2.5px),
@@ -116,7 +116,6 @@ export const MASCOT_CSS = `
 
 .dsh-mascot__stage:hover .dsh-mascot__art { --hover-y: -3px; }
 
-/* 姿态层：data-act 换 --p-act，靠 transition 过渡 */
 .dsh-mascot__act {
   position: relative;
   z-index: 1;
@@ -124,24 +123,38 @@ export const MASCOT_CSS = `
   height: 100%;
   transform-origin: 50% 88%;
   transform: var(--p-act, none);
-  transition: transform 560ms var(--ease-pose), filter 420ms ease-out;
+  transition: transform 480ms var(--ease-pose), filter 380ms ease-out;
 }
 
 /* 深色界面上黑狗会糊进背景：整体提一点亮度，比改毛色安全 */
 .dsh-mascot[data-theme='dark'] .dsh-mascot__act { filter: brightness(1.13); }
 
-.dsh-mascot__portrait {
+/* 呼吸作用在帧栈外层，九帧一起轻轻起伏 */
+.dsh-mascot__frames {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  transform-origin: 50% 94%;
+  animation: mascot-breathe 3.2s ease-in-out infinite;
+  transition: filter 380ms ease-out;
+}
+
+.dsh-mascot__frame {
+  position: absolute;
+  inset: 0;
   display: block;
   width: 100%;
   height: 100%;
   object-fit: contain;
-  transform-origin: 50% 94%;
-  animation: mascot-breathe 4.6s ease-in-out infinite;
-  transition: filter 420ms ease-out;
+  opacity: 0;
+  pointer-events: none;
   -webkit-user-drag: none;
 }
 
-/* 影子、等待光晕、zZz 都是"外围状态"，不碰狗本身 */
+/* 硬切，不加 transition —— 逐帧动画淡入淡出会糊成重影 */
+.dsh-mascot__frame[data-active] { opacity: 1; }
+
+/* 影子、等待光晕、zZz 都在立绘身后，不碰狗本身 */
 .dsh-mascot__fx {
   position: absolute;
   z-index: 0;
@@ -178,33 +191,27 @@ export const MASCOT_CSS = `
 }
 
 /* ---------------- 姿态 ---------------- */
-/* 写实立绘不能掰头掰腿，动作改成"整只狗怎么动"，靠幅度区分而不是形变 */
-.dsh-mascot[data-act='stretch'] { --p-act: translateY(-7px) scale(1.035, 1.055); }
-.dsh-mascot[data-act='bow']     { --p-act: translateY(6px) scale(1.02, 0.91) rotate(1.5deg); }
-.dsh-mascot[data-act='wink']    { --p-act: translateY(-2px) rotate(-4deg) scale(1.01); }
-.dsh-mascot[data-act='alert']   { --p-act: translateY(-4px) scale(1.02); }
-.dsh-mascot[data-act='nap']     { --p-act: translateY(3px) scale(0.985); }
+/* 形体变化全靠切帧，CSS 这里只补一点点整体重心偏移，别和帧抢戏 */
+.dsh-mascot[data-act='stretch'] { --p-act: translateY(-3px); }
+.dsh-mascot[data-act='bow']     { --p-act: translateY(3px); }
+.dsh-mascot[data-act='wink']    { --p-act: rotate(-1.5deg); }
+.dsh-mascot[data-act='jump']    { --p-act: translateY(-6px); }
+.dsh-mascot[data-act='alert']   { --p-act: translateY(-2px); }
+.dsh-mascot[data-act='nap']     { --p-act: none; }
 
-/* 跳要交给关键帧，静态位移做不出起落 */
-.dsh-mascot[data-act='jump'] .dsh-mascot__portrait {
-  animation: mascot-hop 1000ms var(--ease-pose) both;
-}
-.dsh-mascot[data-act='jump'] .mascot-shadow {
-  animation: mascot-shadow-hop 1000ms var(--ease-pose) both;
-}
-
-.dsh-mascot[data-act='nap'] .dsh-mascot__portrait {
-  filter: brightness(0.82) saturate(0.9);
-  animation-duration: 7.4s;
+.dsh-mascot[data-act='nap'] .dsh-mascot__frames {
+  filter: brightness(0.9) saturate(0.92);
+  /* 睡着时唯一还在动的就是呼吸，周期要短一点、幅度看得出来 */
+  animation-duration: 3.4s;
 }
 .dsh-mascot[data-act='nap'] .mascot-zzz { opacity: 1; }
 .dsh-mascot[data-act='nap'] .mascot-zzz__a { animation: mascot-zzz 3.2s ease-in-out infinite; }
 .dsh-mascot[data-act='nap'] .mascot-zzz__b { animation: mascot-zzz 3.2s ease-in-out 1.1s infinite; }
 
 /* ---------------- 情绪 ---------------- */
-.dsh-mascot[data-mood='working'] .dsh-mascot__portrait { animation-duration: 2.9s; }
-.dsh-mascot[data-mood='happy'] .dsh-mascot__portrait { animation-duration: 2.4s; }
-.dsh-mascot[data-mood='sleepy'] .dsh-mascot__portrait { animation-duration: 7s; }
+.dsh-mascot[data-mood='working'] .dsh-mascot__frames { animation-duration: 2.2s; }
+.dsh-mascot[data-mood='happy'] .dsh-mascot__frames { animation-duration: 1.9s; }
+.dsh-mascot[data-mood='sleepy'] .dsh-mascot__frames { animation-duration: 6.4s; }
 
 .dsh-mascot[data-mood='waiting'] .mascot-halo {
   opacity: 0.42;
@@ -331,22 +338,7 @@ export const MASCOT_CSS = `
 /* ---------------- 关键帧 ---------------- */
 @keyframes mascot-breathe {
   0%, 100% { transform: scale(1, 1); }
-  50% { transform: scale(1.008, 1.018); }
-}
-
-@keyframes mascot-hop {
-  0%   { transform: translateY(0) scale(1, 1); }
-  16%  { transform: translateY(5px) scale(1.04, 0.94); }
-  40%  { transform: translateY(-24px) scale(0.97, 1.05); }
-  62%  { transform: translateY(-5px) scale(1, 1.01); }
-  80%  { transform: translateY(3px) scale(1.03, 0.96); }
-  100% { transform: translateY(0) scale(1, 1); }
-}
-
-@keyframes mascot-shadow-hop {
-  0%, 100% { transform: scale(1); opacity: 0.22; }
-  40% { transform: scale(0.7); opacity: 0.1; }
-  80% { transform: scale(1.05); opacity: 0.26; }
+  50% { transform: scale(1.012, 1.026); }
 }
 
 @keyframes mascot-halo {
@@ -368,7 +360,7 @@ export const MASCOT_CSS = `
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .dsh-mascot__portrait,
+  .dsh-mascot__frames,
   .mascot-halo,
   .mascot-shadow,
   .mascot-zzz__a,
@@ -378,13 +370,13 @@ export const MASCOT_CSS = `
   }
   .dsh-mascot__art,
   .dsh-mascot__act,
-  .dsh-mascot__portrait { transition: none !important; }
+  .dsh-mascot__frames { transition: none !important; }
 }
 
 @media (max-width: 720px) {
   .dsh-mascot { right: 12px; bottom: 10px; }
   .dsh-mascot__body,
-  .dsh-mascot__art { width: 150px; height: 127px; }
+  .dsh-mascot__art { width: 162px; height: 160px; }
   .dsh-mascot__canvas { width: 150px; height: 190px; }
   .dsh-mascot__bubble { max-width: 150px; margin-top: 8px; }
 }

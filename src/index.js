@@ -8,8 +8,9 @@
 import { createElement, useEffect, useRef } from 'react'
 
 import { createActPlayer } from './acts.js'
-import { createCharacter } from './character.js'
+import { createCharacter, showFrame } from './character.js'
 import { loadConfig, saveConfig } from './config.js'
+import { createFramePlayer } from './frames-player.js'
 import { attachGazeToElement, attachLookAt } from './look-at.js'
 import { fetchModelManifest, mountLive2D } from './model-loader.js'
 import { createSettingsPanel } from './settings.js'
@@ -143,11 +144,25 @@ function mountMascot(host) {
     if (!signal.running && !signal.awaitingApproval) setMood(resolveMood(signal))
   }, MOOD_TICK_MS)
 
-  // 小动作轮播：趴 → 伸懒腰 → 趴 → 压低 → 趴 → 歪头 → 跳 → 打盹 → 趴 …
-  // 情绪只决定"允许出现哪些动作"，节奏和切姿态都交给它。
+  // 逐帧播放器：待机时一直眨眼、动耳朵，大动作时切成对应姿态帧。
+  // CSS 只管呼吸、明暗和重心，形体变化全部由这里硬切出来。
+  const art = /** @type {HTMLElement} */ (body.firstElementChild)
+  const framePlayer = createFramePlayer({
+    onFrame(name) {
+      showFrame(art, name)
+    },
+    reducedMotion:
+      typeof window.matchMedia === 'function' &&
+      window.matchMedia('(prefers-reduced-motion: reduce)').matches,
+  })
+  framePlayer.start()
+
+  // 小动作轮播：趴 → 打哈欠 → 趴 → 下犬式 → 趴 → wink → 跳 → 打盹 → 趴 …
+  // 情绪只决定"允许出现哪些动作"，节奏交给它，帧序列交给 framePlayer。
   const player = createActPlayer({
     onAct(act) {
       root.dataset.act = act
+      framePlayer.playAct(act)
     },
   })
   player.setMood(mood)
@@ -273,6 +288,7 @@ function mountMascot(host) {
   function dispose() {
     disposed = true
     player.destroy()
+    framePlayer.destroy()
     body.removeEventListener('click', greet)
     gear.removeEventListener('click', togglePanel)
     window.removeEventListener(SIGNAL_EVENT, onSignal)
