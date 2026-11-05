@@ -1,0 +1,85 @@
+{
+  "name": "dsh-mascot-plugin",
+  "version": "0.1.0",
+  "description": "DSH 看板娘：在 DeepSeek Harness Web 界面右下角养一只会跟着你眼神走的 Live2D 板娘",
+  "type": "module",
+  "main": "./lib/index.js",
+  "exports": {
+    ".": "./lib/index.js",
+    "./client": {
+      "default": "./lib/client.js"
+    },
+    "./package.json": "./package.json",
+    "./patches/bundle.yaml": "./patches/bundle.yaml"
+  },
+  "files": [
+    "lib/",
+    "patches/",
+    "assets/",
+    "README.md",
+    "LICENSE"
+  ],
+  "dsh": {
+    "bundle": {
+      "patch": "./patches/bundle.yaml"
+    },
+    "client": {
+      "platform": "web",
+      "inject": [
+        "@deepseek-ai/dsh-client-runtime",
+        "@deepseek-ai/dsh-client-ui-slots",
+        "@deepseek-ai/dsh-client-ui-layout"
+      ]
+    }
+  },
+  "engines": {
+    "node": "^22.19.0 || >=24.0.0"
+  },
+  "scripts": {
+    "dev": "node scripts/build.mjs --watch",
+    "build": "node scripts/build.mjs",
+    "typecheck": "tsc --noEmit",
+    "lint": "oxlint src lib test scripts",
+    "format": "prettier --write .",
+    "format:check": "prettier --check .",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "check": "pnpm typecheck && pnpm lint && pnpm test && pnpm build",
+    "prepack": "pnpm build",
+    "prepare": "node scripts/build.mjs"
+  },
+  "peerDependencies": {
+    "react": "^18.2.0 || ^19.0.0"
+  },
+  "devDependencies": {
+    "@types/node": "^22.15.0",
+    "@types/react": "^18.3.1",
+    "esbuild": "^0.25.0",
+    "oxlint": "^1.75.0",
+    "prettier": "^3.6.0",
+    "typescript": "^5.9.0",
+    "vitest": "^3.2.0"
+  },
+  "pnpm": {
+    "onlyBuiltDependencies": [
+      "esbuild"
+    ]
+  },
+  "keywords": [
+    "dsh",
+    "deepseek-harness",
+    "plugin",
+    "mascot",
+    "live2d",
+    "看板娘"
+  ],
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/xiongXinYan/dsh-mascot-plugin.git"
+  },
+  "bugs": {
+    "url": "https://github.com/xiongXinYan/dsh-mascot-plugin/issues"
+  },
+  "homepage": "https://github.com/xiongXinYan/dsh-mascot-plugin#readme"
+}

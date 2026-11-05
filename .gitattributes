@@ -1,0 +1,17 @@
+* text=auto eol=lf
+
+# 二进制素材不要做行尾转换，也不要参与 diff
+*.png binary
+*.jpg binary
+*.jpeg binary
+*.webp binary
+*.gif binary
+*.ico binary
+*.woff2 binary
+*.mp3 binary
+*.ogg binary
+*.zip binary
+
+# 机器生成的内容：不在 review 里展开
+pnpm-lock.yaml -diff linguist-generated
+lib/client.js linguist-generated

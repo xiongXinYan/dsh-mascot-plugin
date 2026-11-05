@@ -1,0 +1,120 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="utf-8" />
+    <title>dsh-mascot-plugin · 本地预览</title>
+    <style>
+      html,
+      body {
+        height: 100%;
+        margin: 0;
+        font:
+          14px/1.6 -apple-system,
+          'Segoe UI',
+          'Microsoft YaHei',
+          sans-serif;
+        color: #1f2328;
+        background: #f6f7f9;
+      }
+      body {
+        display: grid;
+        place-items: center;
+      }
+      .tip {
+        max-width: 460px;
+        padding: 24px;
+        border-radius: 12px;
+        background: #fff;
+        box-shadow: 0 8px 24px rgba(15, 23, 42, 0.08);
+      }
+      .tip code {
+        padding: 1px 5px;
+        border-radius: 4px;
+        background: #eef1f5;
+        font-size: 12px;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="tip">
+      <h1>本地预览</h1>
+      <p>
+        这个页面用最小的桩（<code>__ModuleLoader__</code> / <code>react</code> /
+        <code>ctx</code>）把 <code>lib/client.js</code> 跑起来，省掉「改一行 → 重装插件 → 重启
+        dsh」的循环。
+      </p>
+      <p>
+        右下角应该有一只板娘。先跑 <code>pnpm build</code>（或 <code>pnpm dev</code>），再打开本页。
+      </p>
+      <p>此时日志里如果出现 <code>模型加载失败</code>，是正常的：刻意没有接 Live2D 运行时。</p>
+    </div>
+
+    <script>
+      // ---- 1. Loader 桩：只保留 apply 需要的形状 ----
+      window.__ModuleLoader__ = {
+        load({ id, factory }) {
+          const exports = factory((name) => {
+            if (name === 'react') return ReactStub
+            throw new Error(`预览桩没有提供模块：${name}`)
+          })
+          window.__dshMascot = { id, exports }
+          boot(exports)
+        },
+      }
+
+      // ---- 2. 极简 React 桩：够 createElement / useEffect / useRef 用 ----
+      const ReactStub = {
+        createElement(type, props, ...children) {
+          if (typeof type === 'function') return type(props)
+          const el = document.createElement(type)
+          for (const [key, value] of Object.entries(props || {})) {
+            if (key === 'ref') {
+              if (value) value.current = el
+            } else if (key === 'className') {
+              el.className = value
+            } else if (key === 'style') {
+              Object.assign(el.style, value)
+            } else if (value !== false && value != null) {
+              el.setAttribute(key, value)
+            }
+          }
+          for (const child of children.flat()) {
+            if (child == null) continue
+            el.appendChild(typeof child === 'string' ? document.createTextNode(child) : child)
+          }
+          return el
+        },
+        useEffect(run) {
+          queueMicrotask(() => run())
+        },
+        useRef(initial) {
+          return { current: initial }
+        },
+      }
+
+      // ---- 3. 宿主装配：effect 立即执行，slot 注册立即渲染 ----
+      function boot(exports) {
+        const ctx = {
+          effect(run, label) {
+            const dispose = run()
+            console.debug('[preview] effect:', label, typeof dispose)
+          },
+          slots: {
+            inject(slot, factory) {
+              console.debug('[preview] slots.inject:', slot)
+              factory()
+            },
+            register(registration, component) {
+              console.debug('[preview] slots.register:', registration)
+              document.body.appendChild(component({}))
+              return { dispose() {} }
+            },
+          },
+        }
+
+        exports.apply(ctx)
+      }
+    </script>
+    <script src="../lib/client.js"></script>
+  </body>
+</html>

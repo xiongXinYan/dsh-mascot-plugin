@@ -1,0 +1,39 @@
+# 依赖
+node_modules/
+.pnpm-store/
+
+# 构建产物
+# 注意：lib/index.js 是手写的宿主入口，必须入库；只忽略客户端产物。
+lib/client.js
+lib/*.map
+dist/
+*.tsbuildinfo
+
+# 测试
+coverage/
+.vitest/
+
+# 本地环境与密钥
+.env
+.env.*
+!.env.example
+
+# 编辑器 / 系统
+.idea/
+.vscode/*
+!.vscode/extensions.json
+!.vscode/settings.json
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# 日志与临时文件
+*.log
+npm-debug.log*
+pnpm-debug.log*
+*.tmp
+~$*
+
+# 本地工具数据
+.workbuddy/
+assets/models.json
