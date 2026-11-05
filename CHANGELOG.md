@@ -4,6 +4,15 @@
 
 ## [Unreleased]
 
+### 新增
+
+- 内置 SVG 立绘：分层绘制（发/脸/眼/嘴/身体），呼吸、眨眼、呆毛摆动，替代原来的色块占位
+- 姿态表现落到立绘：`waiting` 光环脉冲 + 暖色描边，`sleepy` 闭眼与 `zZz`，`happy` 张嘴与跳跃
+- 眼神跟随支持 SVG 路径：`--gaze-x/--gaze-y` → 头部微转 + 瞳孔偏移
+- 姿态入口 `dsh-mascot:signal` 自定义事件，推送 `SessionSignal` 即换姿态
+- `scripts/dev.mjs` + 假 DSH 界面的预览页，`pnpm dev` 一条命令看效果
+- 模型清单地址改为按插件部署位置解析（原先是相对页面，装到 `/plugins/<id>/` 下会指错）
+
 ### 计划中
 
 - 会话状态联动：工具开跑 → `working`，弹审批 → `waiting`

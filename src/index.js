@@ -7,8 +7,9 @@
  */
 import { createElement, useEffect, useRef } from 'react'
 
+import { createCharacter } from './character.js'
 import { loadConfig, saveConfig } from './config.js'
-import { attachLookAt } from './look-at.js'
+import { attachGazeToElement, attachLookAt } from './look-at.js'
 import { fetchModelManifest, mountLive2D } from './model-loader.js'
 import { createSettingsPanel } from './settings.js'
 import { MOOD_LABEL, pickGreeting, resolveMood } from './state.js'
@@ -22,6 +23,18 @@ export const name = 'dsh-mascot'
  * 表现为"插件装了但界面上什么都没有"。
  */
 export const inject = ['slots']
+
+/**
+ * 会话信号事件名。
+ *
+ * 宿主侧（或调试页面）往 window 上派发一个 CustomEvent，detail 是 SessionSignal，
+ * 板娘就会按 resolveMood 的规则换姿态。等接上 DSH 原生会话事件流后，
+ * 这里只是把来源从"手动派发"换成"订阅"。
+ */
+export const SIGNAL_EVENT = 'dsh-mascot:signal'
+
+/** 空闲多久重新判一次姿态。太密没必要，太疏会明显迟钝。 */
+const MOOD_TICK_MS = 20_000
 
 /**
  * @param {import('./types.js').ClientContext} ctx
@@ -64,8 +77,10 @@ function MascotLayer() {
 function mountMascot(host) {
   /** @type {import('./types.js').MascotConfig} */
   let config = loadConfig()
+  /** @type {import('./types.js').SessionSignal} */
+  let signal = { lastActivityAt: Date.now() }
   /** @type {import('./types.js').MascotMood} */
-  let mood = resolveMood({})
+  let mood = resolveMood(signal)
   /** @type {Array<{id: string, label: string, url: string}>} */
   let models = []
   /** @type {null | {destroy: () => void, model: any}} */
@@ -88,21 +103,12 @@ function mountMascot(host) {
   const stage = document.createElement('div')
   stage.className = 'dsh-mascot__stage'
 
-  // 内置占位立绘：没有模型、模型挂了、运行时缺失，都靠它兜底。
+  // 内置立绘：没有模型、模型挂了、运行时缺失，都靠它兜底。
+  // 单独包一层 button 是为了可点、可聚焦、可被读屏念出来。
   const body = document.createElement('button')
   body.type = 'button'
   body.className = 'dsh-mascot__body'
-
-  for (const side of ['left', 'right']) {
-    const eye = document.createElement('span')
-    eye.className = `dsh-mascot__eye dsh-mascot__eye--${side}`
-    body.appendChild(eye)
-  }
-  const mouth = document.createElement('span')
-  mouth.className = 'dsh-mascot__mouth'
-  body.appendChild(mouth)
-
-  stage.appendChild(body)
+  body.appendChild(createCharacter())
 
   const gear = document.createElement('button')
   gear.type = 'button'
@@ -110,11 +116,22 @@ function mountMascot(host) {
   gear.textContent = '⚙'
   gear.title = '板娘设置'
 
-  root.append(bubble, stage, gear)
+  stage.append(body, gear)
+  root.append(bubble, stage)
   host.appendChild(root)
 
   body.addEventListener('click', greet)
   gear.addEventListener('click', togglePanel)
+  window.addEventListener(SIGNAL_EVENT, onSignal)
+
+  // 眼神：鼠标动 → toGaze → CSS 变量 → 头部与瞳孔偏移
+  const detachGaze = attachGazeToElement(/** @type {HTMLElement} */ (body.firstElementChild), () =>
+    body.getBoundingClientRect(),
+  )
+
+  const moodTimer = window.setInterval(() => {
+    if (!signal.running && !signal.awaitingApproval) setMood(resolveMood(signal))
+  }, MOOD_TICK_MS)
 
   render()
   void loadManifest()
@@ -124,20 +141,36 @@ function mountMascot(host) {
   function render() {
     root.style.setProperty('--dsh-mascot-scale', String(config.scale))
     root.dataset.mood = mood
-    body.title = `点一下${config.displayName}`
+    body.title = `点一下${config.displayName}（${MOOD_LABEL[mood]}）`
     body.setAttribute('aria-label', `${config.displayName}，当前${MOOD_LABEL[mood]}，点一下打招呼`)
+  }
+
+  /**
+   * @param {import('./types.js').MascotMood} next
+   */
+  function setMood(next) {
+    if (next === mood) return
+    mood = next
+    render()
+  }
+
+  /** @param {Event} event */
+  function onSignal(event) {
+    const detail = /** @type {CustomEvent} */ (event).detail
+    if (!detail || typeof detail !== 'object') return
+    signal = { ...signal, ...detail }
+    setMood(resolveMood(signal))
   }
 
   function greet() {
     showBubble(pickGreeting())
-    mood = 'happy'
-    render()
+    signal.lastActivityAt = Date.now()
+    setMood('happy')
 
     if (bubbleTimer) window.clearTimeout(bubbleTimer)
     bubbleTimer = window.setTimeout(() => {
       bubble.hidden = true
-      mood = resolveMood({})
-      render()
+      setMood(resolveMood(signal))
     }, BUBBLE_MS)
   }
 
@@ -218,7 +251,10 @@ function mountMascot(host) {
     disposed = true
     body.removeEventListener('click', greet)
     gear.removeEventListener('click', togglePanel)
+    window.removeEventListener(SIGNAL_EVENT, onSignal)
+    window.clearInterval(moodTimer)
     if (bubbleTimer) window.clearTimeout(bubbleTimer)
+    detachGaze()
     detachLookAt?.()
     live2d?.destroy()
     panel = null

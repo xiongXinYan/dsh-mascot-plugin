@@ -3,11 +3,17 @@
  *
  * 为什么是字符串而不是 .css 文件：Loader 只给前端一个 client.js，
  * 没有静态资源通道，样式必须随 JS 一起进来，由 apply() 注入 <style>。
+ *
+ * 分两段读：
+ *   1. 外壳 —— 定位、气泡、设置面板（HTML 部分）
+ *   2. 立绘 —— SVG 各层的动画（呼吸/眨眼/眼神/姿态）
+ * 立绘的颜色刻意选了明暗主题都能站住的中间调，暗色下还有一层极淡的白色辉光兜底。
  */
 
 export const STYLE_ID = 'dsh-mascot-styles'
 
 export const MASCOT_CSS = `
+/* ---------------- 外壳 ---------------- */
 .dsh-mascot-anchor {
   position: fixed;
   inset: 0;
@@ -16,9 +22,14 @@ export const MASCOT_CSS = `
 }
 
 .dsh-mascot {
+  /* 浮层卡片的中性底色：默认跟随系统明暗，宿主也可以直接覆盖这两个变量 */
+  --mascot-surface: rgba(255, 255, 255, 0.94);
+  --mascot-line: rgba(15, 23, 42, 0.14);
+  --mascot-shadow: 0 12px 32px rgba(15, 23, 42, 0.16);
+
   position: absolute;
   right: 24px;
-  bottom: 20px;
+  bottom: 0;
   display: flex;
   align-items: flex-end;
   gap: 10px;
@@ -35,11 +46,35 @@ export const MASCOT_CSS = `
 .dsh-mascot__stage {
   position: relative;
   pointer-events: auto;
-  transition: transform 160ms ease-out;
 }
 
-.dsh-mascot__stage:hover {
-  transform: translateY(-2px);
+/* 宿主的深色主题通常和系统一致；万一不一致，宿主可以用 --mascot-* 覆盖 */
+@media (prefers-color-scheme: dark) {
+  .dsh-mascot {
+    --mascot-surface: rgba(32, 35, 42, 0.96);
+    --mascot-line: rgba(255, 255, 255, 0.14);
+    --mascot-shadow: 0 14px 34px rgba(0, 0, 0, 0.45);
+  }
+}
+
+.dsh-mascot__body {
+  display: block;
+  width: 160px;
+  height: 200px;
+  padding: 0;
+  border: 0;
+  background: none;
+  color: inherit;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.dsh-mascot__body[hidden] { display: none; }
+
+.dsh-mascot__body:focus-visible {
+  outline: 2px solid #6f9df0;
+  outline-offset: 4px;
+  border-radius: 12px;
 }
 
 .dsh-mascot__canvas {
@@ -48,72 +83,140 @@ export const MASCOT_CSS = `
   height: 280px;
 }
 
-/* 没有模型时的占位立绘：一个会呼吸的小家伙，保证插件肉眼可验证 */
-.dsh-mascot__body {
-  position: relative;
-  width: 96px;
-  height: 116px;
-  padding: 0;
-  border: none;
-  cursor: pointer;
-  border-radius: 52% 52% 46% 46% / 58% 58% 42% 42%;
-  background:
-    radial-gradient(circle at 32% 26%, rgba(255, 255, 255, 0.85), transparent 42%),
-    linear-gradient(168deg, #9ec7ff 0%, #6f9df0 58%, #5a86e0 100%);
-  box-shadow:
-    0 12px 28px rgba(60, 92, 160, 0.28),
-    inset 0 -8px 18px rgba(38, 62, 120, 0.22);
-  transform-origin: bottom center;
-  animation: dsh-mascot-breathe 4.6s ease-in-out infinite;
-  transition: transform 160ms ease-out;
+/* ---------------- 立绘 ---------------- */
+.dsh-mascot__art {
+  width: 160px;
+  height: 200px;
+  transition: transform 180ms ease-out;
 }
 
-.dsh-mascot__body:focus-visible {
-  outline: 2px solid #6f9df0;
-  outline-offset: 3px;
+.dsh-mascot__stage:hover .dsh-mascot__art { transform: translateY(-3px); }
+
+.dsh-mascot__svg {
+  display: block;
+  width: 100%;
+  height: 100%;
+  overflow: visible;
 }
 
-.dsh-mascot__eye {
-  position: absolute;
-  top: 44px;
-  width: 9px;
-  height: 13px;
-  border-radius: 50%;
-  background: #1d2740;
-  animation: dsh-mascot-blink 6.4s ease-in-out infinite;
+/* 呼吸：整只上下微微起伏，作用在最外层组上，头和身体一起动才不散架 */
+.mascot-breathe {
+  transform-box: fill-box;
+  transform-origin: 50% 100%;
+  animation: mascot-breathe 4.8s ease-in-out infinite;
 }
 
-.dsh-mascot__eye--left { left: 30px; }
-.dsh-mascot__eye--right { right: 30px; }
-
-.dsh-mascot__mouth {
-  position: absolute;
-  left: 50%;
-  top: 66px;
-  width: 12px;
-  height: 6px;
-  margin-left: -6px;
-  border-radius: 0 0 8px 8px;
-  background: rgba(29, 39, 64, 0.72);
+/* 眼神：头带一点点，瞳孔带多一点。--gaze-x/y 由 look-at.js 写在外层节点上 */
+.mascot-head {
+  transform-box: fill-box;
+  transform-origin: 50% 88%;
+  transform:
+    translate(calc(var(--gaze-x, 0) * 2px), calc(var(--gaze-y, 0) * -1.5px))
+    rotate(calc(var(--gaze-x, 0) * 3.5deg));
+  transition: transform 240ms ease-out;
 }
 
+.mascot-pupil {
+  transform: translate(calc(var(--gaze-x, 0) * 2.6px), calc(var(--gaze-y, 0) * -2px));
+  transition: transform 90ms linear;
+}
+
+.mascot-eyes {
+  transform-box: fill-box;
+  transform-origin: 50% 50%;
+  animation: mascot-blink 5.6s ease-in-out infinite;
+}
+
+.mascot-ahoge {
+  transform-box: fill-box;
+  transform-origin: 50% 100%;
+  animation: mascot-ahoge 3.8s ease-in-out infinite;
+}
+
+/* 嘴：三种形态常驻在 DOM 里，只切透明度，避免切姿态时闪一下 */
+.mascot-mouth { opacity: 0; transition: opacity 120ms linear; }
+.mascot-mouth--smile { opacity: 1; }
+
+/* 等待确认：琥珀色光环脉冲 */
+.mascot-ring {
+  opacity: 0;
+  transform-box: fill-box;
+  transform-origin: 50% 50%;
+}
+
+/* 打盹：飘出来的 zZz */
+.mascot-zzz { opacity: 0; }
+
+/* ---------------- 姿态 ---------------- */
+.dsh-mascot[data-mood='working'] .mascot-breathe { animation-duration: 2.4s; }
+
+.dsh-mascot[data-mood='working'] .mascot-eyes { animation-duration: 3.4s; }
+
+.dsh-mascot[data-mood='waiting'] .mascot-ring {
+  animation: mascot-ring 1.8s ease-out infinite;
+}
+
+/* 光环是"扫过去"的，单靠它容易漏看，再叠一层常亮的暖色描边 */
+.dsh-mascot[data-mood='waiting'] .dsh-mascot__art {
+  filter: drop-shadow(0 0 9px rgba(255, 184, 76, 0.55));
+}
+
+.dsh-mascot[data-mood='waiting'] .mascot-breathe { animation-duration: 3s; }
+
+.dsh-mascot[data-mood='sleepy'] .mascot-breathe { animation-duration: 7s; }
+
+.dsh-mascot[data-mood='sleepy'] .mascot-eyes {
+  animation: none;
+  transform: scaleY(0.1);
+}
+
+.dsh-mascot[data-mood='sleepy'] .mascot-mouth--smile { opacity: 0; }
+.dsh-mascot[data-mood='sleepy'] .mascot-mouth--flat { opacity: 1; }
+
+.dsh-mascot[data-mood='sleepy'] .mascot-zzz { opacity: 1; }
+.dsh-mascot[data-mood='sleepy'] .mascot-zzz__a { animation: mascot-zzz 3.2s ease-in-out infinite; }
+.dsh-mascot[data-mood='sleepy'] .mascot-zzz__b { animation: mascot-zzz 3.2s ease-in-out 1.1s infinite; }
+
+.dsh-mascot[data-mood='happy'] .mascot-mouth--smile { opacity: 0; }
+.dsh-mascot[data-mood='happy'] .mascot-mouth--open { opacity: 1; }
+.dsh-mascot[data-mood='happy'] .dsh-mascot__art { animation: mascot-hop 520ms ease-out 2; }
+
+/* ---------------- 气泡 ---------------- */
+/* 贴在头顶而不是脚边：气泡是"她在说话"，位置必须靠近脸 */
 .dsh-mascot__bubble {
-  max-width: 200px;
+  position: relative;
+  align-self: flex-start;
+  margin-top: 22px;
+  max-width: 190px;
   padding: 8px 12px;
   border-radius: 12px 12px 4px 12px;
-  background: rgba(127, 127, 127, 0.12);
-  border: 1px solid rgba(127, 127, 127, 0.22);
-  backdrop-filter: blur(12px);
-  -webkit-backdrop-filter: blur(12px);
-  animation: dsh-mascot-pop 180ms ease-out;
+  background: var(--mascot-surface);
+  border: 1px solid var(--mascot-line);
+  box-shadow: var(--mascot-shadow);
+  animation: mascot-pop 180ms ease-out;
+}
+
+.dsh-mascot__bubble::after {
+  content: '';
+  position: absolute;
+  right: 6px;
+  bottom: -6px;
+  width: 10px;
+  height: 10px;
+  background: var(--mascot-surface);
+  border-right: 1px solid var(--mascot-line);
+  border-bottom: 1px solid var(--mascot-line);
+  border-radius: 0 0 3px 0;
+  transform: rotate(45deg);
 }
 
 .dsh-mascot__bubble[hidden] { display: none; }
 
+/* ---------------- 齿轮与面板 ---------------- */
 .dsh-mascot__gear {
   position: absolute;
-  right: 0;
-  top: 0;
+  right: 2px;
+  top: 4px;
   width: 22px;
   height: 22px;
   padding: 0;
@@ -130,21 +233,19 @@ export const MASCOT_CSS = `
 }
 
 .dsh-mascot:hover .dsh-mascot__gear,
-.dsh-mascot__gear:focus-visible {
-  opacity: 1;
-}
+.dsh-mascot__gear:focus-visible { opacity: 1; }
 
 .dsh-mascot__panel {
   position: absolute;
-  right: 0;
-  bottom: 8px;
+  /* 往左开，不要盖住立绘本体 */
+  right: calc(100% + 10px);
+  bottom: 10px;
   width: 248px;
   padding: 12px;
   border-radius: 14px;
-  background: rgba(127, 127, 127, 0.14);
-  border: 1px solid rgba(127, 127, 127, 0.24);
-  backdrop-filter: blur(16px);
-  -webkit-backdrop-filter: blur(16px);
+  background: var(--mascot-surface);
+  border: 1px solid var(--mascot-line);
+  box-shadow: var(--mascot-shadow);
   pointer-events: auto;
   display: grid;
   gap: 8px;
@@ -178,9 +279,9 @@ export const MASCOT_CSS = `
 .dsh-mascot__input {
   width: 100%;
   padding: 4px 6px;
-  border: 1px solid rgba(127, 127, 127, 0.28);
+  border: 1px solid var(--mascot-line);
   border-radius: 6px;
-  background: rgba(255, 255, 255, 0.08);
+  background: color-mix(in srgb, currentColor 6%, transparent);
   color: inherit;
   font: inherit;
 }
@@ -192,65 +293,67 @@ export const MASCOT_CSS = `
   line-height: 1.4;
 }
 
-/* 工作态：呼吸更快 */
-.dsh-mascot[data-mood='working'] .dsh-mascot__body { animation-duration: 1.5s; }
-
-/* 等待确认：加一圈琥珀色提示环 */
-.dsh-mascot[data-mood='waiting'] .dsh-mascot__body {
-  animation-duration: 1s;
-  box-shadow:
-    0 0 0 3px rgba(255, 186, 76, 0.5),
-    0 12px 28px rgba(60, 92, 160, 0.28);
-}
-
-/* 打盹：压扁一点、眼睛闭上 */
-.dsh-mascot[data-mood='sleepy'] .dsh-mascot__body {
-  animation-duration: 6.5s;
-  filter: saturate(0.85);
-}
-
-.dsh-mascot[data-mood='sleepy'] .dsh-mascot__eye {
-  height: 2px;
-  animation: none;
-}
-
-.dsh-mascot[data-mood='happy'] .dsh-mascot__body {
-  animation: dsh-mascot-hop 420ms ease-out 2;
-}
-
-@keyframes dsh-mascot-breathe {
+/* ---------------- 关键帧 ---------------- */
+@keyframes mascot-breathe {
   0%, 100% { transform: scaleY(1); }
-  50% { transform: scaleY(1.025); }
+  50% { transform: scaleY(1.022); }
 }
 
-@keyframes dsh-mascot-blink {
-  0%, 92%, 100% { transform: scaleY(1); }
-  95% { transform: scaleY(0.1); }
+@keyframes mascot-blink {
+  0%, 90%, 100% { transform: scaleY(1); }
+  93% { transform: scaleY(0.08); }
+  96% { transform: scaleY(1); }
 }
 
-@keyframes dsh-mascot-hop {
+@keyframes mascot-ahoge {
+  0%, 100% { transform: rotate(-4deg); }
+  50% { transform: rotate(4deg); }
+}
+
+@keyframes mascot-ring {
+  0% { opacity: 0.75; transform: scale(0.86); }
+  75% { opacity: 0; transform: scale(1.08); }
+  100% { opacity: 0; transform: scale(1.08); }
+}
+
+@keyframes mascot-zzz {
+  0% { opacity: 0; transform: translateY(6px) scale(0.92); }
+  25% { opacity: 0.85; }
+  75% { opacity: 0.85; }
+  100% { opacity: 0; transform: translateY(-10px) scale(1.06); }
+}
+
+@keyframes mascot-hop {
   0%, 100% { transform: translateY(0); }
   45% { transform: translateY(-10px); }
 }
 
-@keyframes dsh-mascot-pop {
+@keyframes mascot-pop {
   from { opacity: 0; transform: translateY(6px) scale(0.96); }
   to { opacity: 1; transform: translateY(0) scale(1); }
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .dsh-mascot__body,
-  .dsh-mascot__eye,
-  .dsh-mascot__bubble,
-  .dsh-mascot__stage {
+  .mascot-breathe,
+  .mascot-eyes,
+  .mascot-ahoge,
+  .mascot-ring,
+  .mascot-zzz__a,
+  .mascot-zzz__b,
+  .dsh-mascot__art,
+  .dsh-mascot__bubble {
     animation: none !important;
-    transition: none !important;
   }
+  .mascot-head,
+  .mascot-pupil { transition: none !important; }
 }
 
 @media (max-width: 720px) {
-  .dsh-mascot { right: 12px; bottom: 12px; }
+  .dsh-mascot { right: 12px; bottom: 10px; }
+  .dsh-mascot__body,
+  .dsh-mascot__art { width: 120px; height: 150px; }
   .dsh-mascot__canvas { width: 150px; height: 190px; }
+  .dsh-mascot__bubble { max-width: 150px; margin-bottom: 18px; }
 }
 `
 

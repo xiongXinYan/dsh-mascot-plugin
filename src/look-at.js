@@ -66,3 +66,40 @@ export function attachLookAt(model, getRect) {
     if (frame) window.cancelAnimationFrame(frame)
   }
 }
+
+/**
+ * 让内置立绘的眼神跟着鼠标走。
+ *
+ * 和 attachLookAt 的区别只在于"往哪写"：Cubism 模型走参数 API，
+ * SVG 立绘走 CSS 变量（--gaze-x / --gaze-y，范围 -1..1），
+ * 具体偏移多少由 styles.js 决定，换模型时接口不用动。
+ *
+ * @param {HTMLElement} el 立绘根节点
+ * @param {() => {left: number, top: number, width: number, height: number}} getRect
+ * @returns {() => void} 解除监听
+ */
+export function attachGazeToElement(el, getRect) {
+  let frame = 0
+  /** @type {MouseEvent | null} */
+  let latest = null
+
+  /** @param {MouseEvent} event */
+  function onMove(event) {
+    latest = event
+    if (frame) return
+    frame = window.requestAnimationFrame(() => {
+      frame = 0
+      if (!latest) return
+      const { x, y } = toGaze(latest.clientX, latest.clientY, getRect())
+      el.style.setProperty('--gaze-x', x.toFixed(3))
+      el.style.setProperty('--gaze-y', y.toFixed(3))
+    })
+  }
+
+  window.addEventListener('mousemove', onMove, { passive: true })
+
+  return () => {
+    window.removeEventListener('mousemove', onMove)
+    if (frame) window.cancelAnimationFrame(frame)
+  }
+}

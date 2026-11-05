@@ -3,6 +3,25 @@
 /** 运行时缺失时给一条能排查的提示，比 "Cannot read properties of undefined" 有用。 */
 export const RUNTIME_MISSING = '未检测到 Live2D 运行时：window.PIXI.live2d 不存在'
 
+/**
+ * 插件自己的资源根地址。
+ *
+ * 必须在模块求值时就抓住 document.currentScript —— 等 fetch 的时候它已经是 null 了。
+ * 拿不到（比如被别的脚本内联引入）就退回页面根目录，不至于直接抛错。
+ */
+const PLUGIN_BASE = (() => {
+  const script =
+    typeof document === 'undefined'
+      ? null
+      : /** @type {HTMLScriptElement | null} */ (document.currentScript)
+  const src = script?.src ?? ''
+  try {
+    return src ? new URL('.', src).href : new URL('.', location.href).href
+  } catch {
+    return ''
+  }
+})()
+
 /** 画布尺寸（CSS 像素）。模型按这个比例摆放，缩放交给外层 transform。 */
 const STAGE_WIDTH = 220
 const STAGE_HEIGHT = 280
@@ -31,18 +50,40 @@ export function hasLive2DRuntime() {
  * 浏览器不能列目录，所以"自动扫描 .model3.json"必须发生在构建期或宿主侧，
  * 前端只能读这份清单。清单不存在时返回空数组，不抛错。
  *
+ * 地址按插件自身的部署位置拼（而不是相对页面）—— 插件在 /plugins/<id>/ 下，
+ * 相对页面拼会指向宿主的根目录。
+ *
  * @param {string} [url]
  * @returns {Promise<Array<{id: string, label: string, url: string}>>}
  */
-export async function fetchModelManifest(url = 'assets/models.json') {
+export async function fetchModelManifest(url = `${PLUGIN_BASE}assets/models.json`) {
   try {
     const response = await fetch(url, { credentials: 'same-origin' })
     if (!response.ok) return []
     /** @type {{models?: Array<{id: string, label: string, url: string}>}} */
     const data = await response.json()
-    return Array.isArray(data.models) ? data.models : []
+    if (!Array.isArray(data.models)) return []
+
+    // 清单里是相对路径，这里补成绝对地址：写进 localStorage 的 modelUrl
+    // 之后要在任何页面路径下都能用。
+    return data.models.map((model) => ({
+      ...model,
+      url: absolute(model.url),
+    }))
   } catch {
     return []
+  }
+}
+
+/**
+ * @param {string} path
+ * @returns {string}
+ */
+function absolute(path) {
+  try {
+    return new URL(path, PLUGIN_BASE).href
+  } catch {
+    return path
   }
 }
 

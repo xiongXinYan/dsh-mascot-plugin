@@ -36,7 +36,8 @@
     "node": "^22.19.0 || >=24.0.0"
   },
   "scripts": {
-    "dev": "node scripts/build.mjs --watch",
+    "dev": "node scripts/dev.mjs",
+    "dev:build": "node scripts/build.mjs --watch",
     "build": "node scripts/build.mjs",
     "typecheck": "tsc --noEmit",
     "lint": "oxlint src lib test scripts",
