@@ -1,6 +1,7 @@
 node_modules/
 pnpm-lock.yaml
 lib/client.js
+.shots/
 assets/models.json
 assets/mascot/**/*.moc3
 assets/mascot/**/*.png

@@ -71,7 +71,7 @@ export function attachLookAt(model, getRect) {
  * 让内置立绘的眼神跟着鼠标走。
  *
  * 和 attachLookAt 的区别只在于"往哪写"：Cubism 模型走参数 API，
- * SVG 立绘走 CSS 变量（--gaze-x / --gaze-y，范围 -1..1），
+ * 内置立绘走 CSS 变量（--gaze-x / --gaze-y，范围 -1..1），
  * 具体偏移多少由 styles.js 决定，换模型时接口不用动。
  *
  * @param {HTMLElement} el 立绘根节点

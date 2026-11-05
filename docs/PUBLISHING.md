@@ -86,7 +86,7 @@ dsh plugin --profile web add github:xiongXinYan/dsh-mascot-plugin
 
 DSH 0.1.x，web profile（DSH 仍为 developer preview，槽位契约可能变化）。
 纯浏览器侧运行，无原生依赖；Node ^22.19.0 || >=24.0.0 仅在安装与构建时需要。
-不依赖 Live2D 运行时：内置 SVG 立绘开箱可用，检测到 PIXI/Cubism 时可切换 Live2D 模型。
+不依赖 Live2D 运行时：内置立绘开箱可用，检测到 PIXI/Cubism 时可切换 Live2D 模型。
 
 ### 许可证
 
@@ -100,7 +100,7 @@ MIT
 ### 补充说明
 
 权限：不联网（除插件自带 assets/models.json 与用户手填的 modelUrl）；不读凭据；只在自建浮层节点内操作 DOM；偏好存 localStorage。
-已知限制：内置模型尚未随包提供静态服务（宿主侧路线图第 2 项），当前默认使用内置 SVG 立绘；暂不支持拖拽；会话事件流订阅待接。
+已知限制：内置模型尚未随包提供静态服务（宿主侧路线图第 2 项），当前默认使用内置立绘；暂不支持拖拽；会话事件流订阅待接。
 
 ### 提交前自查
 

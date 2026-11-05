@@ -6,11 +6,11 @@
  * 小动作播放器。
  *
  * 为什么需要它：立绘只有一张，但看起来要像动图那样一直在动。
- * 做法是把"形状"交给 CSS 变量（每套姿态就是一组变量值，切换时靠 transition 过渡），
+ * 做法是把"形状"交给 data-act（每套姿态就是一组 transform，切换时靠 transition 过渡），
  * 这里只负责**什么时候切成哪一套**，不碰任何几何。
  *
- * 节奏设计：每个动作之前先回一次 `sit`。
- * 少了这个中间态，两个动作连着切会像抽帧；有了它，观感是"坐下 → 起身做个动作 → 坐回去"。
+ * 节奏设计：每个动作之前先回一次 `sit`（实际是趴姿，名字沿用早期代码）。
+ * 少了这个中间态，两个动作连着切会像抽帧；有了它，观感是"趴着 → 支起来做个动作 → 趴回去"。
  */
 
 /** 每个动作持续多久（毫秒）。和 CSS 里的 transition 时长是对着调的。 */
@@ -68,7 +68,7 @@ function shuffle(pool, random) {
 }
 
 /**
- * 两次动作之间在 `sit` 上停多久。
+ * 两次动作之间在 `sit`（趴姿）上停多久。
  * 带随机是刻意的：固定间隔听一会儿就像节拍器。
  * @param {() => number} random
  * @returns {number}
@@ -200,7 +200,7 @@ export function createActPlayer({ onAct, random = Math.random, schedule, cancel 
         play(held)
         return
       }
-      // 从钉住的姿态里解放出来：先回坐姿，再继续轮播
+      // 从钉住的姿态里解放出来：先回趴姿，再继续轮播
       play(BASE_ACT)
       after(gapMs(random), tick)
     },

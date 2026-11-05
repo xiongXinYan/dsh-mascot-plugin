@@ -143,7 +143,7 @@ function mountMascot(host) {
     if (!signal.running && !signal.awaitingApproval) setMood(resolveMood(signal))
   }, MOOD_TICK_MS)
 
-  // 小动作轮播：坐 → 伸懒腰 → 坐 → 下犬式 → 坐 → wink → 跳 → 打盹 → 坐 …
+  // 小动作轮播：趴 → 伸懒腰 → 趴 → 压低 → 趴 → 歪头 → 跳 → 打盹 → 趴 …
   // 情绪只决定"允许出现哪些动作"，节奏和切姿态都交给它。
   const player = createActPlayer({
     onAct(act) {
