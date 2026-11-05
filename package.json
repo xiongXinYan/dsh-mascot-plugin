@@ -1,7 +1,7 @@
 {
   "name": "dsh-mascot-plugin",
-  "version": "0.1.0",
-  "description": "DSH 看板娘：在 DeepSeek Harness Web 界面右下角养一只会跟着你眼神走的 Live2D 板娘",
+  "version": "0.2.0",
+  "description": "给 DeepSeek Harness Web 界面装一位会呼吸、会看你、随会话状态换姿态的看板娘",
   "type": "module",
   "main": "./lib/index.js",
   "exports": {
@@ -46,8 +46,7 @@
     "test": "vitest run",
     "test:watch": "vitest",
     "check": "pnpm typecheck && pnpm lint && pnpm test && pnpm build",
-    "prepack": "pnpm build",
-    "prepare": "node scripts/build.mjs"
+    "prepack": "node scripts/build.mjs"
   },
   "peerDependencies": {
     "react": "^18.2.0 || ^19.0.0"

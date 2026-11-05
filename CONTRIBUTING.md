@@ -13,7 +13,7 @@
 - 主干 `main` 始终可构建、可安装。
 - 分支：`feat/<简述>`、`fix/<简述>`、`chore/<简述>`、`docs/<简述>`。
 - 提交信息用 Conventional Commits：`feat(client): 支持拖拽停靠`、`fix(loader): 模型加载失败时清理 canvas`。
-- 一个提交只做一件事。**不要**把 `lib/client.js` 的重新构建混进功能提交里。
+- 一个提交只做一件事。改了 `src/` 时要**同一个提交**里带上重建后的 `lib/client.js`——它是入库的，漏了就等于源码安装的人拿到旧客户端；CI 会跑 `git diff --exit-code` 抓这种不一致。
 
 ## 3. 代码规范
 
@@ -66,7 +66,8 @@
 
 - [ ] `pnpm check` 通过
 - [ ] 新增/变更的行为有对应测试，或说明了为什么不测
-- [ ] 没有提交 `lib/client.js`、`node_modules`、编辑器配置
+- [ ] 没有提交 `node_modules`、编辑器配置
+- [ ] 改了 `src/` 时同步提交了 `pnpm build` 的产物（`lib/client.js`、`assets/models.json`）
 - [ ] 新增的定时器 / 监听器 / DOM 节点都在清理函数里
 - [ ] 文案没有硬编码在渲染逻辑里（该进 `state.js` 或 `assets/lines.json`）
 - [ ] 素材授权已注明

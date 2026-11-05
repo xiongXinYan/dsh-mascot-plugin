@@ -14,6 +14,7 @@ import { fetchModelManifest, mountLive2D } from './model-loader.js'
 import { createSettingsPanel } from './settings.js'
 import { MOOD_LABEL, pickGreeting, resolveMood } from './state.js'
 import { injectStyles } from './styles.js'
+import { detectTheme, watchTheme } from './theme.js'
 
 export const name = 'dsh-mascot'
 
@@ -94,6 +95,8 @@ function mountMascot(host) {
 
   const root = document.createElement('div')
   root.className = 'dsh-mascot'
+  // 卡片配色跟宿主界面走，不跟操作系统走 —— DSH 自己的明暗开关才是真相
+  root.dataset.theme = detectTheme()
 
   const bubble = document.createElement('div')
   bubble.className = 'dsh-mascot__bubble'
@@ -123,6 +126,10 @@ function mountMascot(host) {
   body.addEventListener('click', greet)
   gear.addEventListener('click', togglePanel)
   window.addEventListener(SIGNAL_EVENT, onSignal)
+
+  const stopWatchingTheme = watchTheme((theme) => {
+    root.dataset.theme = theme
+  })
 
   // 眼神：鼠标动 → toGaze → CSS 变量 → 头部与瞳孔偏移
   const detachGaze = attachGazeToElement(/** @type {HTMLElement} */ (body.firstElementChild), () =>
@@ -254,6 +261,7 @@ function mountMascot(host) {
     window.removeEventListener(SIGNAL_EVENT, onSignal)
     window.clearInterval(moodTimer)
     if (bubbleTimer) window.clearTimeout(bubbleTimer)
+    stopWatchingTheme()
     detachGaze()
     detachLookAt?.()
     live2d?.destroy()

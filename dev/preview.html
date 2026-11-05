@@ -220,12 +220,8 @@
         font-size: 12px;
       }
 
-      /* 宿主的主题变量：插件默认跟系统明暗，这里显式喂给它，切主题才跟手 */
-      html[data-theme='dark'] .dsh-mascot {
-        --mascot-surface: rgba(32, 35, 42, 0.97);
-        --mascot-line: rgba(255, 255, 255, 0.14);
-        --mascot-shadow: 0 14px 34px rgba(0, 0, 0, 0.45);
-      }
+      /* 这里刻意不给插件喂任何颜色变量：明暗是它自己读宿主背景判出来的，
+         这一页只需要保证 <html data-theme> 和页面配色一致，就等于模拟了宿主 */
 
       /* ---------- 预览控制条（不属于插件，只是给这页用的） ---------- */
       .deck {
@@ -455,6 +451,9 @@
       const params = new URLSearchParams(location.search)
 
       if (params.get('theme')) document.documentElement.dataset.theme = params.get('theme')
+
+      // ?deck=0 收起左下角的调试控制条，截图和录屏时用
+      if (params.get('deck') === '0') document.querySelector('.deck')?.remove()
 
       if (params.get('mood')) {
         setTimeout(() => ACTIONS[params.get('mood')]?.(), 250)

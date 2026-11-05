@@ -4,6 +4,8 @@
 
 ## [Unreleased]
 
+## [0.2.0] - 2026-11-05
+
 ### 新增
 
 - 内置 SVG 立绘：分层绘制（发/脸/眼/嘴/身体），呼吸、眨眼、呆毛摆动，替代原来的色块占位
@@ -11,7 +13,17 @@
 - 眼神跟随支持 SVG 路径：`--gaze-x/--gaze-y` → 头部微转 + 瞳孔偏移
 - 姿态入口 `dsh-mascot:signal` 自定义事件，推送 `SessionSignal` 即换姿态
 - `scripts/dev.mjs` + 假 DSH 界面的预览页，`pnpm dev` 一条命令看效果
+- `src/theme.js`：读宿主背景亮度判断明暗，不再依赖 `prefers-color-scheme`
+- `docs/screenshots/` 与 `docs/PUBLISHING.md`：收录所需的截图与提交材料
+
+### 变更
+
 - 模型清单地址改为按插件部署位置解析（原先是相对页面，装到 `/plugins/<id>/` 下会指错）
+- `lib/client.js` 与 `assets/models.json` 改为入库：`plugin add github:<owner>/<repo>` 不跑构建脚本，产物缺失会表现为"装成功但界面上什么都没有"
+- 去掉 `prepare`，避免从 git 安装时强制拉起 esbuild；发布仍由 `prepack` 重建产物
+- 设置面板改为向上展开，不再压住输入框
+- 齿轮按钮常驻 42% 不透明度：原先 `opacity: 0` 让触屏设备没有可点的设置入口
+- CI 增加产物一致性校验（构建后 `git diff --exit-code`）
 
 ### 计划中
 

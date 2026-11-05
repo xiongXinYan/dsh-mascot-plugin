@@ -22,8 +22,9 @@ export const MASCOT_CSS = `
 }
 
 .dsh-mascot {
-  /* 浮层卡片的中性底色：默认跟随系统明暗，宿主也可以直接覆盖这两个变量 */
+  /* 浮层卡片的中性配色。data-theme 由 theme.js 按宿主界面判定后写在根节点上 */
   --mascot-surface: rgba(255, 255, 255, 0.94);
+  --mascot-text: #1f2328;
   --mascot-line: rgba(15, 23, 42, 0.14);
   --mascot-shadow: 0 12px 32px rgba(15, 23, 42, 0.16);
 
@@ -40,21 +41,29 @@ export const MASCOT_CSS = `
   font-family: inherit;
   font-size: 13px;
   line-height: 1.5;
-  color: inherit;
+  color: var(--mascot-text);
+}
+
+.dsh-mascot[data-theme='dark'] {
+  --mascot-surface: rgba(32, 35, 42, 0.96);
+  --mascot-text: #e8eaee;
+  --mascot-line: rgba(255, 255, 255, 0.14);
+  --mascot-shadow: 0 14px 34px rgba(0, 0, 0, 0.45);
+}
+
+/* 兜底：theme.js 没跑起来（例如被 CSP 拦了 inline script）时也不至于配色错乱 */
+@media (prefers-color-scheme: dark) {
+  .dsh-mascot:not([data-theme]) {
+    --mascot-surface: rgba(32, 35, 42, 0.96);
+    --mascot-text: #e8eaee;
+    --mascot-line: rgba(255, 255, 255, 0.14);
+    --mascot-shadow: 0 14px 34px rgba(0, 0, 0, 0.45);
+  }
 }
 
 .dsh-mascot__stage {
   position: relative;
   pointer-events: auto;
-}
-
-/* 宿主的深色主题通常和系统一致；万一不一致，宿主可以用 --mascot-* 覆盖 */
-@media (prefers-color-scheme: dark) {
-  .dsh-mascot {
-    --mascot-surface: rgba(32, 35, 42, 0.96);
-    --mascot-line: rgba(255, 255, 255, 0.14);
-    --mascot-shadow: 0 14px 34px rgba(0, 0, 0, 0.45);
-  }
 }
 
 .dsh-mascot__body {
@@ -228,7 +237,9 @@ export const MASCOT_CSS = `
   line-height: 1;
   cursor: pointer;
   pointer-events: auto;
-  opacity: 0;
+  /* 不能用 opacity: 0 常驻：触屏设备没有 hover，等于把设置入口藏死了。
+     给一个够淡但始终可点的默认态，悬停/聚焦时再提亮。 */
+  opacity: 0.42;
   transition: opacity 140ms ease-out;
 }
 
@@ -237,10 +248,13 @@ export const MASCOT_CSS = `
 
 .dsh-mascot__panel {
   position: absolute;
-  /* 往左开，不要盖住立绘本体 */
+  /* 往左开、往上抬：不要盖住立绘，也不要压住输入框 —— 压在输入框上等于把人锁在门外 */
   right: calc(100% + 10px);
-  bottom: 10px;
+  bottom: calc(100% + 8px);
   width: 248px;
+  max-height: min(64vh, 460px);
+  overflow-y: auto;
+  overscroll-behavior: contain;
   padding: 12px;
   border-radius: 14px;
   background: var(--mascot-surface);

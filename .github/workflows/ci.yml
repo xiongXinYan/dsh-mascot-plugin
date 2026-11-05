@@ -29,4 +29,10 @@ jobs:
 
       # 产物必须真的是 Loader 认的外壳，否则装了也是白装
       - name: 校验 client 产物外壳
-        run: grep -q '__ModuleLoader__.load' lib/client.js
+        run: |
+          grep -q '__ModuleLoader__.load' lib/client.js
+          grep -q 'id: "dsh-mascot-plugin"' lib/client.js
+
+      # lib/ 是入库的：源码改了却忘了提交产物，源码安装的用户会拿到旧的客户端
+      - name: 校验产物与源码一致
+        run: git diff --exit-code -- lib/client.js assets/models.json

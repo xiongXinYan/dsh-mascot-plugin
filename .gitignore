@@ -3,8 +3,9 @@ node_modules/
 .pnpm-store/
 
 # 构建产物
-# 注意：lib/index.js 是手写的宿主入口，必须入库；只忽略客户端产物。
-lib/client.js
+# lib/ 与 assets/models.json 都是入库的：DSH 支持 `plugin add github:<owner>/<repo>`
+# 从源码安装，那条路径不会跑构建脚本。产物缺失的表现是“装成功了但界面上什么都没有”，
+# 排查成本极高，所以宁可把它提交进仓库，由 CI 校验产物与源码是否一致。
 lib/*.map
 dist/
 *.tsbuildinfo
@@ -36,4 +37,3 @@ pnpm-debug.log*
 
 # 本地工具数据
 .workbuddy/
-assets/models.json
