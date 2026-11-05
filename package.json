@@ -1,7 +1,7 @@
 {
   "name": "dsh-mascot-plugin",
-  "version": "0.2.0",
-  "description": "给 DeepSeek Harness Web 界面装一位会呼吸、会看你、随会话状态换姿态的看板娘",
+  "version": "0.3.0",
+  "description": "给 DeepSeek Harness Web 界面养一只中华五黑犬：会眨眼、会跟着你、一直循环做小动作",
   "type": "module",
   "main": "./lib/index.js",
   "exports": {

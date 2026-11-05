@@ -7,6 +7,7 @@
  */
 import { createElement, useEffect, useRef } from 'react'
 
+import { createActPlayer } from './acts.js'
 import { createCharacter } from './character.js'
 import { loadConfig, saveConfig } from './config.js'
 import { attachGazeToElement, attachLookAt } from './look-at.js'
@@ -97,6 +98,8 @@ function mountMascot(host) {
   root.className = 'dsh-mascot'
   // 卡片配色跟宿主界面走，不跟操作系统走 —— DSH 自己的明暗开关才是真相
   root.dataset.theme = detectTheme()
+  // 动作写在 data-act 上，姿态是纯 CSS 变量，改这一个属性就是换姿势
+  root.dataset.act = 'sit'
 
   const bubble = document.createElement('div')
   bubble.className = 'dsh-mascot__bubble'
@@ -140,6 +143,16 @@ function mountMascot(host) {
     if (!signal.running && !signal.awaitingApproval) setMood(resolveMood(signal))
   }, MOOD_TICK_MS)
 
+  // 小动作轮播：坐 → 伸懒腰 → 坐 → 下犬式 → 坐 → wink → 跳 → 打盹 → 坐 …
+  // 情绪只决定"允许出现哪些动作"，节奏和切姿态都交给它。
+  const player = createActPlayer({
+    onAct(act) {
+      root.dataset.act = act
+    },
+  })
+  player.setMood(mood)
+  player.start()
+
   render()
   void loadManifest()
   void applyModel()
@@ -158,6 +171,7 @@ function mountMascot(host) {
   function setMood(next) {
     if (next === mood) return
     mood = next
+    player.setMood(next)
     render()
   }
 
@@ -173,6 +187,8 @@ function mountMascot(host) {
     showBubble(pickGreeting())
     signal.lastActivityAt = Date.now()
     setMood('happy')
+    // 点一下立刻跳一下：等情绪自己轮到 jump 会有 1~2 秒延迟，手感很差
+    player.poke('jump')
 
     if (bubbleTimer) window.clearTimeout(bubbleTimer)
     bubbleTimer = window.setTimeout(() => {
@@ -256,6 +272,7 @@ function mountMascot(host) {
 
   function dispose() {
     disposed = true
+    player.destroy()
     body.removeEventListener('click', greet)
     gear.removeEventListener('click', togglePanel)
     window.removeEventListener(SIGNAL_EVENT, onSignal)

@@ -5,7 +5,7 @@ export const STORAGE_KEY = 'dsh-mascot:config'
 
 /** @type {MascotConfig} */
 export const DEFAULT_CONFIG = {
-  displayName: '板娘',
+  displayName: '黑豆',
   scale: 1,
   showBubble: true,
   docked: true,

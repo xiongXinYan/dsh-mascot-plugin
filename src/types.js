@@ -11,6 +11,12 @@
  */
 
 /**
+ * 立绘能做的小动作。每个值在 styles.js 里对应一组姿态变量，
+ * 由 acts.js 按节奏轮播 —— 这是"看起来像动图"的来源。
+ * @typedef {'sit'|'stretch'|'bow'|'wink'|'jump'|'nap'|'alert'} MascotAct
+ */
+
+/**
  * 会话侧推给板娘的粗粒度信号。等接上 DSH 会话事件流后由宿主/客户端服务填充。
  * @typedef {object} SessionSignal
  * @property {boolean} [running] 有工具在跑 / agent 正在执行

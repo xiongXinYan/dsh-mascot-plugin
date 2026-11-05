@@ -1,10 +1,10 @@
 # dsh-mascot-plugin
 
-> 给 DeepSeek Harness（DSH）的 Web 界面装一位板娘：她待在右下角，你写代码她待机，工具跑起来她开始忙，等你点「同意」的时候她会一直看着你。
+> 给 DeepSeek Harness（DSH）的 Web 界面养一只看板犬：一只中华五黑犬，全天守在右下角。你写代码它坐着摇尾巴，工具跑起来它跟着忙，等你点「同意」的时候它会一直盯着你。
 
-一个 DSH 双半场插件（host + client），装完右下角就多一个会呼吸、会眨眼、眼神跟着鼠标走的角色，不依赖任何外部服务。
+一个 DSH 双半场插件（host + client），装完右下角就多一只一直在动的狗：坐着、伸懒腰、下犬式、wink、跳两下、趴着打盹，像一张循环 GIF。眼神跟着鼠标走，不依赖任何外部服务。
 
-![深色主题下的板娘](docs/screenshots/overview-dark.png)
+![深色主题下的看板犬](docs/screenshots/overview-dark.png)
 
 ## 安装
 
@@ -26,15 +26,16 @@ dsh plugin --profile web remove dsh-mascot-plugin
 
 ## 它到底做了什么
 
-| 你会看到                                    | 触发条件                    |
-| ------------------------------------------- | --------------------------- |
-| 右下角一个 Q 版角色，呼吸起伏、定时眨眼     | 装好即出现，无需配置        |
-| 眼神跟着鼠标走，头也会轻微偏一下            | 鼠标在页面上移动            |
-| 点她一下：张嘴笑、跳两下、冒一句台词        | 点击角色                    |
-| 琥珀色光环 + 暖色描边                       | 会话在等你审批（`waiting`） |
-| 呼吸加快、眨眼变勤                          | 有工具在跑（`working`）     |
-| 闭眼、头顶飘 `zZz`                          | 5 分钟没有活动（`sleepy`）  |
-| 设置面板：称呼 / 缩放 / 气泡开关 / 模型地址 | 悬停角色右上角的齿轮        |
+| 你会看到                                                    | 触发条件                    |
+| ----------------------------------------------------------- | --------------------------- |
+| 右下角一只 Q 版黑狗，呼吸起伏、定时眨眼                     | 装好即出现，无需配置        |
+| 坐 → 伸懒腰 → 坐 → 下犬式 → 坐 → wink → 跳 → 打盹，一直循环 | 常驻，不需要触发            |
+| 被盯着看：头会转、瞳孔会跟                                  | 鼠标在页面上移动            |
+| 点它一下：跳一下、张嘴、冒一句台词                          | 点击角色                    |
+| 琥珀色光环 + 暖色描边                                       | 会话在等你审批（`waiting`） |
+| 呼吸加快、眨眼变勤                                          | 有工具在跑（`working`）     |
+| 闭眼、头顶飘 `zZz`                                          | 5 分钟没有活动（`sleepy`）  |
+| 设置面板：称呼 / 缩放 / 气泡开关 / 模型地址                 | 角色右上角的齿轮            |
 
 偏好存在 `localStorage['dsh-mascot:config']`，不写会话日志、不上云。
 
@@ -77,7 +78,7 @@ dsh plugin --profile web remove dsh-mascot-plugin
 
 | 键            | 默认   | 说明                                        |
 | ------------- | ------ | ------------------------------------------- |
-| `displayName` | `板娘` | 称呼，出现在 tooltip 与无障碍标签里         |
+| `displayName` | `黑豆` | 称呼，出现在 tooltip 与无障碍标签里         |
 | `scale`       | `1`    | 缩放，`0.6 ~ 1.6`                           |
 | `showBubble`  | `true` | 是否显示对话气泡                            |
 | `docked`      | `true` | 是否吸附右下角（自由拖拽待实现）            |
@@ -118,7 +119,8 @@ dsh-mascot-plugin/
 │   └── client.js               # 浏览器端产物（入库，源码安装时直接可用）
 ├── src/                        # 客户端源码，构建后拼成 lib/client.js
 │   ├── index.js                # 挂载入口、浮层装配、姿态分发
-│   ├── character.js            # 内置 SVG 立绘（分层，动画在 styles.js）
+│   ├── character.js            # 内置 SVG 立绘：一只中华五黑犬（分层）
+│   ├── acts.js                 # 小动作轮播：坐/伸懒腰/下犬式/wink/跳/打盹
 │   ├── look-at.js              # 眼神跟随（CSS 变量 / Cubism 参数两条路）
 │   ├── model-loader.js         # 模型清单读取、加载、卸载
 │   ├── settings.js             # 设置面板
@@ -147,6 +149,7 @@ pnpm check        # typecheck + lint + test + build，提交前跑这一条
 ```
 /?mood=waiting&theme=light&bubble=1&panel=1
 /?gaze=0,700&deck=0
+/?act=bow&deck=0&zoom=3      # 钉住单个动作放大看，逐张核对姿态
 ```
 
 装进真实 DSH 里验证：
@@ -185,7 +188,24 @@ window.dispatchEvent(
 
 `resolveMood()` 把信号归一成姿态，优先级：审批 > 干活 > 打盹。等接上 DSH 原生会话事件流，只要把"手动派发"换成"订阅"，其余不变。
 
-眼神跟随有两套实现，共用同一套坐标换算（`toGaze`，有单测）：SVG 立绘写 `--gaze-x/--gaze-y` 交给 CSS；Live2D 写 Cubism 参数 `ParamAngleX/Y`、`ParamEyeBallX/Y`。
+眼神跟随有两套实现，共用同一套坐标换算（`toGaze`，有单测）：SVG 立绘写 `--gaze-x/--gaze-y` 交给 CSS；Live2D 写 `ParamAngleX/Y`、`ParamEyeBallX/Y`。
+
+### 动作是怎么循环的
+
+立绘只有一张，但要看起来像动图，靠的是两层：
+
+1. **姿态层**（`acts.js`）：`sit / stretch / bow / wink / jump / nap / alert` 七个状态，每个状态在 CSS 里就是一组变量——`--p-root`、`--p-head`、`--p-ear-l`…切 `data-act` 就是在换这组值，浏览器负责插值过渡。
+2. **环境层**（CSS 关键帧）：呼吸、眨眼、摇尾、头部微晃。这些和姿态互不干扰，所以任何姿态下都是"活的"。
+
+节拍是"每个动作之前先回坐姿"，就像狗真的起身做个动作再坐回去：
+
+```
+sit → stretch → sit → bow → sit → wink → jump → sit → nap → sit → …
+```
+
+情绪只决定**允许出现哪些动作**：`working` 只挑伸懒腰/wink/下犬式并加快节奏，`waiting` 钉在 `alert`（抬头竖耳），`sleepy` 钉在 `nap`。钉住的状态不参与轮播，测试里把定时器换成假时钟逐条断言过。
+
+为什么用变量而不是给每个动作写一套 `@keyframes`：六个动作 × 七个部位 = 42 段关键帧，改一处要同步改六处。用变量的话，"趴下"只是把 `--p-root` 换成另一串 transform。
 
 ## 已知限制
 
